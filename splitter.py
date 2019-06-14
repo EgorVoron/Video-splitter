@@ -53,14 +53,3 @@ class Splitter:
         for i in range(len(self.points) - 1):
             print('Writing')
             write_video(self.frames[self.points[i]:self.points[i+1]-1], path_to_save + '/' + str(i) + '.mp4', self.fps)
-                
-    def make_videos(self, path_to_save):
-        
-        def write_video(finals, save_path, fps=self.fps):
-            writer = imageio.get_writer(save_path, fps=fps)
-            for final_img in finals:
-                writer.append_data(final_img)
-            writer.close()
-            
-        for i in range(len(self.points)):
-            write_video(self.points[i:i+1], path_to_save + '/' + str(i), self.fps)
