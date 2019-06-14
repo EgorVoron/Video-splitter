@@ -46,5 +46,5 @@ class Splitter:
                 writer.append_data(final_img)
             writer.close()
             
-        for i in range(len(self.points)):
-            write_video(self.points[i:i+1], path_to_save + '/' + str(i), self.fps)
+            for i in range(len(self.points)):
+                write_video(self.points[i:i+1], path_to_save + '/' + str(i), self.fps)
