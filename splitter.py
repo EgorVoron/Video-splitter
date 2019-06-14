@@ -1,3 +1,4 @@
+from time import time
 import argparse
 import moviepy
 from moviepy.editor import *
@@ -5,7 +6,7 @@ from skimage.measure import compare_ssim
 import cv2
 import imageio
 import numpy as np
-from time import time
+
 
 def get_diff(im1, im2, mode='gray'):
     im1 = cv2.resize(im1, (300, 300))
@@ -30,20 +31,18 @@ class Splitter:
         
     def get_points(self):
         i = self.frame_time
-        print('Start')
         while (i < self.len):
             getto = self.v.get_frame(i - self.frame_time)
             d = get_diff(getto, 
                          self.v.get_frame(i), mode='color')
             self.frames.append(getto)
-            
             i += self.frame_time
             if d < 0.45:
-                print(d)
                 self.points.append(round(i * self.fps))
             
                 
-    def make_videos(self, path_to_save):         
+    def make_videos(self, path_to_save):
+        print('Videos are being saved')
         def write_video(finals, save_path, fps=self.fps):
             writer = imageio.get_writer(save_path, fps=fps)
             for final_img in finals:
