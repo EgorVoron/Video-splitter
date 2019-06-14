@@ -43,6 +43,8 @@ class Splitter:
                 
     def make_videos(self, path_to_save):
         print('Videos are being saved')
+        
+        
         def write_video(finals, save_path, fps=self.fps):
             writer = imageio.get_writer(save_path, fps=fps)
             for final_img in finals:
