@@ -38,7 +38,7 @@ class Splitter:
             self.frames.append(getto)
             
             i += self.frame_time
-            if d < 0.55: # 45 is better
+            if d < 0.45:
                 print(d)
                 self.points.append(round(i * self.fps))
             
