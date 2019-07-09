@@ -29,7 +29,7 @@ class Splitter:
         self.frames = []
         
         
-    def get_points(self):
+    def find_points(self):
         i = self.frame_time
         while (i < self.len):
             getto = self.v.get_frame(i - self.frame_time)
@@ -39,6 +39,9 @@ class Splitter:
             i += self.frame_time
             if d < 0.45:
                 self.points.append(round(i * self.fps))
+                
+    def get_points(self):
+        return self.points
             
                 
     def make_videos(self, path_to_save):
