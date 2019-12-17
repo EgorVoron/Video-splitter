@@ -9,7 +9,7 @@ args = parser.parse_args()
 
 splitter = Splitter(args.video_path)
 splitter.find_points()
-if mode == 'y':
+if args.mode == 'y':
   splitter.make_videos(args.path_where_to_save)
   print('Videos are saved')
 else:
