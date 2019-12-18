@@ -2,6 +2,7 @@ from moviepy.editor import *
 from skimage.measure import compare_ssim
 import cv2
 import threading
+# import matplotlib.pyplot as plt
 
 
 class Video:
@@ -27,6 +28,7 @@ class Video:
 
     def find_points(self, accuracy=9):
         previous_frame = self.video_clip.get_frame(self._start)
+        self.frames.append(previous_frame)
         current_time_point = self._start + self.frame_time
         while current_time_point < self._stop:
             current_frame = self.video_clip.get_frame(current_time_point)
@@ -34,8 +36,21 @@ class Video:
             if similarity < 0.30:
                 self.time_points.append(round(current_time_point, accuracy))
                 self.frame_points.append(round(current_time_point * self.fps))
+            self.frames.append(current_frame)
             previous_frame = current_frame
             current_time_point += self.frame_time
+
+    def set_frame_points(self, frame_points):
+        self.frame_points = frame_points
+
+    def set_time_points(self, time_points):
+        self.time_points = time_points
+
+    def set_frames(self, frames):
+        self.frames = frames
+
+    def get_frames(self):
+        return self.frames
 
     def get_frame_points(self):
         return self.frame_points
@@ -43,19 +58,13 @@ class Video:
     def get_time_points(self):
         return self.time_points
 
-    # def make_videos(self, path_to_save):
-    #     print('Videos are being saved')
-    #
-    #     def write_video(finals, save_path, fps=self.fps):
-    #         writer = imageio.get_writer(save_path, fps=fps)
-    #         for final_img in finals:
-    #             writer.append_data(final_img)
-    #         writer.close()
-    #
-    #     for i in range(len(self.points) - 1):
-    #         print('Writing')
-    #         write_video(self.frames[self.points[i]:self.points[i + 1] - 1], path_to_save + '/' + str(i) + '.mp4',
-    #                     self.fps)
+    def make_videos(self, path_to_save):
+        print('Writing...')
+        for point_number in range(len(self.frame_points) - 1):
+            writer = imageio.get_writer(path_to_save + '/' + str(point_number) + '.mp4', fps=self.fps)
+            for img in self.frames[self.frame_points[point_number]:(self.frame_points[point_number + 1]) - 1]:
+                writer.append_data(img)
+            writer.close()
 
 
 def get_diff(im1, im2, mode='gray'):
@@ -68,54 +77,68 @@ def get_diff(im1, im2, mode='gray'):
     return score
 
 
-class MyThread(threading.Thread):
-    def __init__(self, number):
+file_path = '11.mp4'
+
+
+class SplitThread(threading.Thread):
+    def __init__(self, number, num_threads):
         threading.Thread.__init__(self)
         self.number = number
+        self.num_threads = num_threads
         self._return = None
 
     def run(self):
-        video = Video(video_path='11.mp4')
-        video.make_video_part(self.number, 3)
+        video = Video(video_path=file_path)
+        video.make_video_part(self.number, self.num_threads)
         video.find_points()
-        message = "%s is running" % self.number
-        print(message)
-        self._return = video.get_time_points()
+        self._return = (video.get_time_points(), video.get_frame_points(), video.get_frames())
 
     def join(self, *args):
         threading.Thread.join(self)
         return self._return
 
 
-def create_threads():
+def run_splitter(num_threads):
     threads = []
-    for part in range(3):
-        my_thread = MyThread(part)
-        threads.append(my_thread)
-        my_thread.start()
+    for part in range(num_threads):
+        split_thread = SplitThread(part, num_threads)
+        threads.append(split_thread)
+        split_thread.start()
+    time_points, frame_points, frames = [], [], []
     for thread in threads:
-        print(thread.join())
+        time_points += thread.join()[0]
+        frame_points += thread.join()[1]
+        frames += thread.join()[2]
+    return time_points, frame_points, frames
 
 
-def old():
-    from time import time as t
-    s = t()
-    video = Video(video_path='22.mp4')
-    video.find_points()
-    dt = t() - s
-    print(f'SPEED: {(video._len * video.fps) / dt} files per second')
-    print(f'SPEED: {video._len / dt} video seconds per second')
-    print('TIME:', dt)
-    print('frames:', video.get_frame_points())
-    print('time points:', video.get_time_points())
+def write_videos(time_points, frame_points, frames, video_path, path_to_save):
+    full_video = Video(video_path=video_path)
+    full_video.set_frame_points(frame_points)
+    full_video.set_time_points(time_points)
+    full_video.set_frames(frames)
+    full_video.make_videos(path_to_save)
+
+
+# def old():
+#     from time import time as t
+#     s = t()
+#     video = Video(video_path=SUKA)
+#     video.find_points()
+#     dt = t() - s
+#     # print(f'SPEED: {(video._len * video.fps) / dt} files per second')
+#     # print(f'SPEED: {video._len / dt} video seconds per second')
+#     print('TIME1:', dt)
+#     # print('frames:', video.get_frame_points())
+#     # print('time points:', video.get_time_points())
 
 
 def new():
     from time import time as t
     s = t()
-    create_threads()
-    print('TIME:', t() - s)
+    time_points, frame_points, frames = run_splitter(num_threads=3)
+    write_videos(time_points, frame_points, frames, file_path, '/')
+    print('TIME2:', t() - s)
 
 
-old()
-# new()
+new()
