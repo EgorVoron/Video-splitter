@@ -3,6 +3,9 @@ from time import time as t
 from moviepy.editor import *
 from skimage.measure import compare_ssim
 import cv2
+import os
+import zipfile
+import shutil
 
 
 class Video:
@@ -68,7 +71,7 @@ class Video:
                 audio.write_audiofile('tempaudio.mp3')
                 a = AudioFileClip('tempaudio.mp3')
                 sub.set_audio(a)
-                sub.write_videofile(os.path.join(path_to_save, f'second{point_number}.mp4'))
+                sub.write_videofile(f'{path_to_save}/third{point_number}.mp4')
             except Exception as exp:
                 print(exp)
         print('Done')
@@ -125,10 +128,23 @@ def write_videos(time_points, frame_points, frames, file_path, path_to_save):
     full_video.make_videos(path_to_save)
 
 
+def zip_videos(videos_output_path, zip_output_path, zip_name):
+    zipf = zipfile.ZipFile(os.path.join(zip_output_path, zip_name), 'w', zipfile.ZIP_DEFLATED)
+    for root, dirs, files in os.walk(videos_output_path):
+        for file in files:
+            zipf.write(os.path.join(root, file))
+    zipf.close()
+
+
 def main(video_path):
     s = t()
+    temp_videos_path = r'temp_videos_path/'
+    if not os.path.exists(temp_videos_path):
+        os.makedirs(temp_videos_path)
     time_points, frame_points, frames = run_splitter(num_threads=3, file_path=video_path)
-    write_videos(time_points, frame_points, frames, file_path=video_path, path_to_save=r'utils/')
+    write_videos(time_points, frame_points, frames, file_path=video_path, path_to_save=temp_videos_path)
+    zip_videos(videos_output_path=temp_videos_path, zip_output_path='', zip_name='videos.zip')
+    shutil.rmtree(temp_videos_path)
     print('TOTAL TIME:', t() - s)
 
 
