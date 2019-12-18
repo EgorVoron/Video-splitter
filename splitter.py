@@ -2,7 +2,9 @@ from moviepy.editor import *
 from skimage.measure import compare_ssim
 import cv2
 import threading
-# import matplotlib.pyplot as plt
+from PIL import Image
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 class Video:
@@ -61,10 +63,21 @@ class Video:
     def make_videos(self, path_to_save):
         print('Writing...')
         for point_number in range(len(self.frame_points) - 1):
-            writer = imageio.get_writer(path_to_save + '/' + str(point_number) + '.mp4', fps=self.fps)
-            for img in self.frames[self.frame_points[point_number]:(self.frame_points[point_number + 1]) - 1]:
-                writer.append_data(img)
-            writer.close()
+            # writer = imageio.get_writer(path_to_save + '/' + str(point_number) + '.mp4', fps=self.fps)
+            # for img in :
+            #     pilimg = Image.fromarray(img)
+            #     pilimg.save('img.jpg')
+            #     writer.append_data(imageio.imread('img.jpg'))
+            # writer.close()
+            size = self.frames[0].shape
+            fourcc = cv2.VideoWriter_fourcc(*'avc1')
+            size = (size[0], size[1])
+            writer = cv2.VideoWriter(path_to_save, fourcc, self.fps, size)
+            img_list = self.frames[self.frame_points[point_number]:(self.frame_points[point_number + 1]) - 1]
+
+            for i in range(len(img_list)):
+                writer.write(np.array(self.frames[i]))
+            writer.release()
 
 
 def get_diff(im1, im2, mode='gray'):
@@ -77,7 +90,7 @@ def get_diff(im1, im2, mode='gray'):
     return score
 
 
-file_path = '11.mp4'
+file_path = '22.mp4'
 
 
 class SplitThread(threading.Thread):
@@ -137,7 +150,7 @@ def new():
     from time import time as t
     s = t()
     time_points, frame_points, frames = run_splitter(num_threads=3)
-    write_videos(time_points, frame_points, frames, file_path, '/')
+    write_videos(time_points, frame_points, frames, file_path, r'love.mp4')
     print('TIME2:', t() - s)
 
 
