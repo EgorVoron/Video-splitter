@@ -5,6 +5,7 @@ import threading
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
+import imageio_ffmpeg
 
 
 class Video:
@@ -63,21 +64,34 @@ class Video:
     def make_videos(self, path_to_save):
         print('Writing...')
         for point_number in range(len(self.frame_points) - 1):
-            # writer = imageio.get_writer(path_to_save + '/' + str(point_number) + '.mp4', fps=self.fps)
-            # for img in :
-            #     pilimg = Image.fromarray(img)
-            #     pilimg.save('img.jpg')
-            #     writer.append_data(imageio.imread('img.jpg'))
-            # writer.close()
-            size = self.frames[0].shape
-            fourcc = cv2.VideoWriter_fourcc(*'avc1')
-            size = (size[0], size[1])
-            writer = cv2.VideoWriter(path_to_save, fourcc, self.fps, size)
             img_list = self.frames[self.frame_points[point_number]:(self.frame_points[point_number + 1]) - 1]
+            size = self.frames[0].shape
+            size = (size[0], size[1])
+            pics2vid(img_list=img_list, fps=self.fps, size=size, path_to_save=path_to_save)
 
-            for i in range(len(img_list)):
-                writer.write(np.array(self.frames[i]))
-            writer.release()
+
+def pics2vid(img_list, fps, size, path_to_save):
+    pass
+    # writer = imageio_ffmpeg.get_writer(path_to_save + '/' + str(point_number) + '.mp4', fps=self.fps)
+    # gen = imageio_ffmpeg.write_frames(path_to_save, size)
+    # gen.send(None)  # seed the generator
+    # for frame in img_list:
+    #     gen.send(frame)
+    # gen.close()
+    # exit()
+    # for img in img_list:
+    #     pilimg = Image.fromarray(img)
+    #     pilimg.save('img.jpg')
+    #     writer.append_data(imageio.imread('img.jpg'))
+    # writer.close()
+    # size = img_list[0].shape
+    # fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    # size = (size[0], size[1])
+    # writer = cv2.VideoWriter(path_to_save, fourcc, fps, size)
+    #
+    # for i in range(len(img_list)):
+    #     writer.write(np.array(img_list[i]))
+    # writer.release()
 
 
 def get_diff(im1, im2, mode='gray'):
@@ -90,18 +104,18 @@ def get_diff(im1, im2, mode='gray'):
     return score
 
 
-file_path = '22.mp4'
 
 
 class SplitThread(threading.Thread):
-    def __init__(self, number, num_threads):
+    def __init__(self, number, num_threads, file_path):
         threading.Thread.__init__(self)
         self.number = number
         self.num_threads = num_threads
         self._return = None
+        self.file_path = file_path
 
     def run(self):
-        video = Video(video_path=file_path)
+        video = Video(video_path=self.file_path)
         video.make_video_part(self.number, self.num_threads)
         video.find_points()
         self._return = (video.get_time_points(), video.get_frame_points(), video.get_frames())
@@ -111,10 +125,10 @@ class SplitThread(threading.Thread):
         return self._return
 
 
-def run_splitter(num_threads):
+def run_splitter(num_threads, file_path):
     threads = []
     for part in range(num_threads):
-        split_thread = SplitThread(part, num_threads)
+        split_thread = SplitThread(part, num_threads, file_path)
         threads.append(split_thread)
         split_thread.start()
     time_points, frame_points, frames = [], [], []
@@ -125,8 +139,8 @@ def run_splitter(num_threads):
     return time_points, frame_points, frames
 
 
-def write_videos(time_points, frame_points, frames, video_path, path_to_save):
-    full_video = Video(video_path=video_path)
+def write_videos(time_points, frame_points, frames, file_path, path_to_save):
+    full_video = Video(video_path=file_path)
     full_video.set_frame_points(frame_points)
     full_video.set_time_points(time_points)
     full_video.set_frames(frames)
@@ -146,12 +160,12 @@ def write_videos(time_points, frame_points, frames, video_path, path_to_save):
 #     # print('time points:', video.get_time_points())
 
 
-def new():
+def new(video_path):
     from time import time as t
     s = t()
-    time_points, frame_points, frames = run_splitter(num_threads=3)
-    write_videos(time_points, frame_points, frames, file_path, r'love.mp4')
+    time_points, frame_points, frames = run_splitter(num_threads=3, file_path=video_path)
+    write_videos(time_points, frame_points, frames, file_path=video_path, path_to_save=r'loving.mp4')
     print('TIME2:', t() - s)
 
 
-new()
+new(video_path='11.mp4')
