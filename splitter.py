@@ -1,12 +1,9 @@
+import threading
+from time import time as t
 from moviepy.editor import *
 from skimage.measure import compare_ssim
 import cv2
-import threading
-from PIL import Image
-import numpy as np
-import matplotlib.pyplot as plt
-import imageio_ffmpeg
-import subprocess
+
 
 class Video:
     def __init__(self, video_path):
@@ -18,12 +15,9 @@ class Video:
         self._start = 0
         self._stop = self._len
         self.frame_time = 1 / self.fps  # time per one frame
-        self.frame_points = [0, ]  # frame points after each cut
-        self.time_points = [0, ]
+        self.frame_points = []  # frame points after each cut
+        self.time_points = []
         self.frames = []
-
-    def get_audio(self):
-        return self.audio_clip
 
     def make_video_part(self, part, parts_num):
         self._len = self._len / parts_num
@@ -40,7 +34,7 @@ class Video:
         while current_time_point < self._stop:
             current_frame = self.video_clip.get_frame(current_time_point)
             similarity = get_diff(previous_frame, current_frame, mode='color')
-            if similarity < 0.30:
+            if similarity < 0.45:
                 self.time_points.append(round(current_time_point, accuracy))
                 self.frame_points.append(round(current_time_point * self.fps))
             self.frames.append(current_frame)
@@ -67,59 +61,17 @@ class Video:
 
     def make_videos(self, path_to_save):
         print('Writing...')
-        self.frame_points = [i for i in range(10)]
-        for point_number in range(len(self.frame_points) - 1):
-            sub = self.video_clip.subclip(0, 5)
-            audio = self.audio_clip.subclip(0, 5)
-            audio.write_audiofile('tempaudio.mp3')
-            # a = AudioFileClip('tempaudio.mp3')
-            # sub.set_audio(a)
-            sub.write_videofile('lol.mp4')
-            silent_video = r'C:\Users\79161\PycharmProjects\Video-splitter\loving.mp4'
-            music = r'C:\Users\79161\PycharmProjects\Video-splitter\tempaudio.mp3'
-            new = r'C:\Users\79161\PycharmProjects\Video-splitter\flower2.mp4'
-            os.chdir(r'C:\Users\79161')
-            # os.chdir(r'C:\Users\79161\ffmpeg\ffmpeg-20191215-ed9279a-win64-static\ffmpeg-20191215-ed9279a-win64-static\bin')
-            os.system('dir')
-            prog = subprocess.Popen(['runas', '/noprofile', '/user:Administrator', 'NeedsAdminPrivilege.exe'], stdin=subprocess.PIPE)
-            prog.stdin.write('password'.encode())
-            prog.communicate()
-            subprocess.run(
-                [r'C:\Users\79161\ffmpeg\ffmpeg-20191215-ed9279a-win64-static\ffmpeg-20191215-ed9279a-win64-static\bin', ' -i ', silent_video, ' -i ', music, ' -shortest', ' -c:v', ' copy', ' -c:a', ' aac', ' -b:a', ' 256k',
-                 ' -y ', new])
-
-            break
-
-            # img_list = self.frames[self.frame_points[point_number]:(self.frame_points[point_number + 1]) - 1]
-            # size = self.frames[0].shape
-            # size = (size[1], size[0])
-            # pics2vid(img_list=img_list, fps=self.fps, size=size,
-            #          path_to_save=path_to_save, filename=f'{point_number}.mp4')
-            # audio = self.audio_clip.subclip(self.frame_points[point_number], self.frame_points[point_number + 1])
-            # pass
-
-def pics2vid(img_list, fps, size, path_to_save, filename):
-    # writer = imageio_ffmpeg.get_writer(path_to_save + '/' + filename, fps=fps)
-
-    gen = imageio_ffmpeg.write_frames(os.path.join(path_to_save, filename), size=size, fps=fps)
-    gen.send(None)  # seed the generator
-    for img in img_list:
-        gen.send(img)
-    gen.close()
-    # exit()
-    # for img in img_list:
-    #     pilimg = Image.fromarray(img)
-    #     pilimg.save('img.jpg')
-    #     writer.append_data(imageio.imread('img.jpg'))
-    # writer.close()
-    # size = img_list[0].shape
-    # fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    # size = (size[0], size[1])
-    # writer = cv2.VideoWriter(path_to_save, fourcc, fps, size)
-    #
-    # for i in range(len(img_list)):
-    #     writer.write(np.array(img_list[i]))
-    # writer.release()
+        for point_number in range(len(self.time_points) - 1):
+            try:
+                sub = self.video_clip.subclip(self.time_points[point_number], self.time_points[point_number + 1] - 1)
+                audio = self.audio_clip.subclip(self.time_points[point_number], self.time_points[point_number + 1] - 1)
+                audio.write_audiofile('tempaudio.mp3')
+                a = AudioFileClip('tempaudio.mp3')
+                sub.set_audio(a)
+                sub.write_videofile(os.path.join(path_to_save, f'second{point_number}.mp4'))
+            except Exception as exp:
+                print(exp)
+        print('Done')
 
 
 class SplitThread(threading.Thread):
@@ -173,26 +125,11 @@ def write_videos(time_points, frame_points, frames, file_path, path_to_save):
     full_video.make_videos(path_to_save)
 
 
-# def old():
-#     from time import time as t
-#     s = t()
-#     video = Video(video_path=SUKA)
-#     video.find_points()
-#     dt = t() - s
-#     # print(f'SPEED: {(video._len * video.fps) / dt} files per second')
-#     # print(f'SPEED: {video._len / dt} video seconds per second')
-#     print('TIME1:', dt)
-#     # print('frames:', video.get_frame_points())
-#     # print('time points:', video.get_time_points())
-
-
 def main(video_path):
-    from time import time as t
     s = t()
-    # run_splitter(num_threads=3, file_path=video_path)
-    time_points, frame_points, frames = 0, 0, 0
+    time_points, frame_points, frames = run_splitter(num_threads=3, file_path=video_path)
     write_videos(time_points, frame_points, frames, file_path=video_path, path_to_save=r'utils/')
-    print('TIME2:', t() - s)
+    print('TOTAL TIME:', t() - s)
 
 
 main(video_path='11.mp4')
