@@ -78,10 +78,13 @@ class Video:
             silent_video = r'C:\Users\79161\PycharmProjects\Video-splitter\loving.mp4'
             music = r'C:\Users\79161\PycharmProjects\Video-splitter\tempaudio.mp3'
             new = r'C:\Users\79161\PycharmProjects\Video-splitter\flower2.mp4'
-            os.chdir(r'C:\Users\79161\PycharmProjects\Video-splitter')
+            os.chdir(r'C:\Users\79161')
             # os.chdir(r'C:\Users\79161\ffmpeg\ffmpeg-20191215-ed9279a-win64-static\ffmpeg-20191215-ed9279a-win64-static\bin')
             os.system('dir')
-            subprocess.call(
+            prog = subprocess.Popen(['runas', '/noprofile', '/user:Administrator', 'NeedsAdminPrivilege.exe'], stdin=subprocess.PIPE)
+            prog.stdin.write('password'.encode())
+            prog.communicate()
+            subprocess.run(
                 [r'C:\Users\79161\ffmpeg\ffmpeg-20191215-ed9279a-win64-static\ffmpeg-20191215-ed9279a-win64-static\bin', ' -i ', silent_video, ' -i ', music, ' -shortest', ' -c:v', ' copy', ' -c:a', ' aac', ' -b:a', ' 256k',
                  ' -y ', new])
 
