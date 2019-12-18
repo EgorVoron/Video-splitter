@@ -67,10 +67,11 @@ class Video:
             img_list = self.frames[self.frame_points[point_number]:(self.frame_points[point_number + 1]) - 1]
             size = self.frames[0].shape
             size = (size[0], size[1])
-            pics2vid(img_list=img_list, fps=self.fps, size=size, path_to_save=path_to_save)
+            pics2vid(img_list=img_list, fps=self.fps, size=size,
+                     path_to_save=path_to_save, filename=f'{point_number}.mp4')
 
 
-def pics2vid(img_list, fps, size, path_to_save):
+def pics2vid(img_list, fps, size, path_to_save, filename):
     pass
     # writer = imageio_ffmpeg.get_writer(path_to_save + '/' + str(point_number) + '.mp4', fps=self.fps)
     # gen = imageio_ffmpeg.write_frames(path_to_save, size)
@@ -94,18 +95,6 @@ def pics2vid(img_list, fps, size, path_to_save):
     # writer.release()
 
 
-def get_diff(im1, im2, mode='gray'):
-    im1 = cv2.resize(im1, (200, 200))
-    im2 = cv2.resize(im2, (200, 200))
-    if mode == 'color':
-        im1 = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
-        im2 = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
-    (score, diff) = compare_ssim(im1, im2, full=True)
-    return score
-
-
-
-
 class SplitThread(threading.Thread):
     def __init__(self, number, num_threads, file_path):
         threading.Thread.__init__(self)
@@ -123,6 +112,16 @@ class SplitThread(threading.Thread):
     def join(self, *args):
         threading.Thread.join(self)
         return self._return
+
+
+def get_diff(im1, im2, mode='gray'):
+    im1 = cv2.resize(im1, (200, 200))
+    im2 = cv2.resize(im2, (200, 200))
+    if mode == 'color':
+        im1 = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
+        im2 = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
+    (score, diff) = compare_ssim(im1, im2, full=True)
+    return score
 
 
 def run_splitter(num_threads, file_path):
@@ -160,7 +159,7 @@ def write_videos(time_points, frame_points, frames, file_path, path_to_save):
 #     # print('time points:', video.get_time_points())
 
 
-def new(video_path):
+def main(video_path):
     from time import time as t
     s = t()
     time_points, frame_points, frames = run_splitter(num_threads=3, file_path=video_path)
@@ -168,4 +167,4 @@ def new(video_path):
     print('TIME2:', t() - s)
 
 
-new(video_path='11.mp4')
+main(video_path='11.mp4')
