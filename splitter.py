@@ -6,11 +6,12 @@ from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 import imageio_ffmpeg
-
+import subprocess
 
 class Video:
     def __init__(self, video_path):
         self.video_clip = VideoFileClip(video_path)
+        self.audio_clip = self.video_clip.audio
         self.fps = self.video_clip.fps
         self._len = self.video_clip.duration
         self._frame_number = self._len * self.fps
@@ -20,6 +21,9 @@ class Video:
         self.frame_points = [0, ]  # frame points after each cut
         self.time_points = [0, ]
         self.frames = []
+
+    def get_audio(self):
+        return self.audio_clip
 
     def make_video_part(self, part, parts_num):
         self._len = self._len / parts_num
@@ -63,22 +67,42 @@ class Video:
 
     def make_videos(self, path_to_save):
         print('Writing...')
+        self.frame_points = [i for i in range(10)]
         for point_number in range(len(self.frame_points) - 1):
-            img_list = self.frames[self.frame_points[point_number]:(self.frame_points[point_number + 1]) - 1]
-            size = self.frames[0].shape
-            size = (size[0], size[1])
-            pics2vid(img_list=img_list, fps=self.fps, size=size,
-                     path_to_save=path_to_save, filename=f'{point_number}.mp4')
+            sub = self.video_clip.subclip(0, 5)
+            audio = self.audio_clip.subclip(0, 5)
+            audio.write_audiofile('tempaudio.mp3')
+            # a = AudioFileClip('tempaudio.mp3')
+            # sub.set_audio(a)
+            sub.write_videofile('lol.mp4')
+            silent_video = r'C:\Users\79161\PycharmProjects\Video-splitter\loving.mp4'
+            music = r'C:\Users\79161\PycharmProjects\Video-splitter\tempaudio.mp3'
+            new = r'C:\Users\79161\PycharmProjects\Video-splitter\flower2.mp4'
+            os.chdir(r'C:\Users\79161\PycharmProjects\Video-splitter')
+            # os.chdir(r'C:\Users\79161\ffmpeg\ffmpeg-20191215-ed9279a-win64-static\ffmpeg-20191215-ed9279a-win64-static\bin')
+            os.system('dir')
+            subprocess.call(
+                [r'C:\Users\79161\ffmpeg\ffmpeg-20191215-ed9279a-win64-static\ffmpeg-20191215-ed9279a-win64-static\bin', ' -i ', silent_video, ' -i ', music, ' -shortest', ' -c:v', ' copy', ' -c:a', ' aac', ' -b:a', ' 256k',
+                 ' -y ', new])
 
+            break
+
+            # img_list = self.frames[self.frame_points[point_number]:(self.frame_points[point_number + 1]) - 1]
+            # size = self.frames[0].shape
+            # size = (size[1], size[0])
+            # pics2vid(img_list=img_list, fps=self.fps, size=size,
+            #          path_to_save=path_to_save, filename=f'{point_number}.mp4')
+            # audio = self.audio_clip.subclip(self.frame_points[point_number], self.frame_points[point_number + 1])
+            # pass
 
 def pics2vid(img_list, fps, size, path_to_save, filename):
-    pass
-    # writer = imageio_ffmpeg.get_writer(path_to_save + '/' + str(point_number) + '.mp4', fps=self.fps)
-    # gen = imageio_ffmpeg.write_frames(path_to_save, size)
-    # gen.send(None)  # seed the generator
-    # for frame in img_list:
-    #     gen.send(frame)
-    # gen.close()
+    # writer = imageio_ffmpeg.get_writer(path_to_save + '/' + filename, fps=fps)
+
+    gen = imageio_ffmpeg.write_frames(os.path.join(path_to_save, filename), size=size, fps=fps)
+    gen.send(None)  # seed the generator
+    for img in img_list:
+        gen.send(img)
+    gen.close()
     # exit()
     # for img in img_list:
     #     pilimg = Image.fromarray(img)
@@ -162,8 +186,9 @@ def write_videos(time_points, frame_points, frames, file_path, path_to_save):
 def main(video_path):
     from time import time as t
     s = t()
-    time_points, frame_points, frames = run_splitter(num_threads=3, file_path=video_path)
-    write_videos(time_points, frame_points, frames, file_path=video_path, path_to_save=r'loving.mp4')
+    # run_splitter(num_threads=3, file_path=video_path)
+    time_points, frame_points, frames = 0, 0, 0
+    write_videos(time_points, frame_points, frames, file_path=video_path, path_to_save=r'utils/')
     print('TIME2:', t() - s)
 
 
