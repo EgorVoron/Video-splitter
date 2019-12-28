@@ -25,6 +25,17 @@ class Video:
         self.time_points = []
         self.frames = []
 
+    def find_frame(self, input_frame):
+        current_time_point = 0.0
+        output = []
+        while current_time_point <= self._len:
+            current_frame = self.video_clip.get_frame(current_time_point)
+            similarity = get_diff(input_frame, current_frame)
+            if similarity >= 0.9:
+                output.append(current_time_point)
+            current_time_point += self.frame_time
+        return output
+
     def make_video_part(self, part, parts_num):
         self._len = self._len / parts_num
         self._frame_number = self._frame_number / parts_num
