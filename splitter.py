@@ -57,17 +57,17 @@ class Video:
             previous_frame = current_frame
             current_time_point += self.frame_time
 
-    # def make_videos(self, path_to_save, thread_number):
-    #     for point_number in range(len(self.time_points) - 1):
-    #         try:
-    #             sub = self.video_clip.subclip(self.time_points[point_number],
-    #                                           self.time_points[point_number + 1] - self.frame_time)
-    #             audio = self.audio_clip.subclip(self.time_points[point_number],
-    #                                             self.time_points[point_number + 1] - self.frame_time)
-    #             sub.set_audio(audio)
-    #             sub.write_videofile(f'{path_to_save}/{thread_number}_{point_number}.mp4')
-    #         except Exception as exp:
-    #             print(exp)
+    def make_videos(self, path_to_save, thread_number):
+        for point_number in range(len(self.time_points) - 1):
+            try:
+                sub = self.video_clip.subclip(self.time_points[point_number],
+                                              self.time_points[point_number + 1] - self.frame_time)
+                audio = self.audio_clip.subclip(self.time_points[point_number],
+                                                self.time_points[point_number + 1] - self.frame_time)
+                sub.set_audio(audio)
+                sub.write_videofile(f'{path_to_save}/{thread_number}_{point_number}.mp4')
+            except Exception as exp:
+                print(exp)
 
     # @staticmethod
     # def get_ssim(im1, im2):
@@ -146,11 +146,8 @@ def main(video_path):
     time_points, frame_points = sum_points(videos)
     print('time points:', time_points)
     print('frame points:', frame_points)
-    # write_videos(path_to_save=temp_videos_path, videos=videos)
-    # zip_videos(videos_output_path=temp_videos_path, zip_output_path='', zip_name='videos.zip')
+    write_videos(path_to_save=temp_videos_path, videos=videos)
+    zip_videos(videos_output_path=temp_videos_path, zip_output_path='', zip_name='videos.zip')
     shutil.rmtree(temp_videos_path)
     print('Done')
     print('TOTAL TIME:', t() - s)
-
-
-# main(video_path=r'11.mp4')
