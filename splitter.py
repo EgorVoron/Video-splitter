@@ -1,6 +1,8 @@
 import threading
 from time import time as t
 from moviepy.editor import *
+from skimage.measure import compare_ssim
+import cv2
 import os
 import zipfile
 import shutil
@@ -32,7 +34,7 @@ class Video:
         current_time_point = self._start + self.frame_time
         while current_time_point < self._stop:
             current_frame = self.video_clip.get_frame(current_time_point)
-            similarity = get_diff(previous_frame, current_frame, mode='color')
+            similarity = self.get_ssim(previous_frame, current_frame)
             if similarity < 0.45:
                 self.time_points.append(round(current_time_point, accuracy))
                 self.frame_points.append(round(current_time_point * self.fps))
@@ -51,6 +53,15 @@ class Video:
                 sub.write_videofile(f'{path_to_save}/{thread_number}_{point_number}.mp4')
             except Exception as exp:
                 print(exp)
+
+    @staticmethod
+    def get_ssim(im1, im2):
+        im1 = cv2.resize(im1, (200, 200))
+        im2 = cv2.resize(im2, (200, 200))
+        im1 = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
+        im2 = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
+        (score, diff) = compare_ssim(im1, im2, full=True)
+        return score
 
 
 class SplitThread(threading.Thread):
@@ -72,7 +83,13 @@ class SplitThread(threading.Thread):
         return self._return
 
 
-
+def sum_points(videos):
+    time_points_sum = []
+    frame_points_sum = []
+    for video in videos:
+        time_points_sum += video.time_points
+        frame_points_sum += video.frame_points
+    return time_points_sum, frame_points_sum
 
 
 def run_splitter(num_threads, file_path):
@@ -111,6 +128,9 @@ def main(video_path):
     if not os.path.exists(temp_videos_path):
         os.makedirs(temp_videos_path)
     videos = run_splitter(num_threads=3, file_path=video_path)
+    time_points, frame_points = sum_points(videos)
+    print('time points:', time_points)
+    print('frame points:', frame_points)
     write_videos(path_to_save=temp_videos_path, videos=videos)
     zip_videos(videos_output_path=temp_videos_path, zip_output_path='', zip_name='videos.zip')
     shutil.rmtree(temp_videos_path)
