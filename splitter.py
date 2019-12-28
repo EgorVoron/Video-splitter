@@ -31,7 +31,7 @@ class Video:
         while current_time_point <= self._len:
             current_frame = self.video_clip.get_frame(current_time_point)
             similarity = get_diff(input_frame, current_frame)
-            if similarity >= 0.9:
+            if similarity >= 0.6:
                 output.append(current_time_point)
             current_time_point += self.frame_time
         return output
