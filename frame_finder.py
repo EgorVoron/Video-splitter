@@ -1,8 +1,9 @@
 from splitter import Video
-from imageio import imread
 import numpy as np
+from PIL import Image
 
 video = Video('11.mp4')
-frame = imread('ssim/jpg/from_vif.PNG')
-np_frame = np.array(frame)
+frame = Image.open('ssim/jpg/from_vif.PNG')
+rgb_frame = frame.convert('RGB')
+np_frame = np.array(rgb_frame)
 print(video.find_frame(np_frame))
