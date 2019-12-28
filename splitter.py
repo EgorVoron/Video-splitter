@@ -1,16 +1,19 @@
 import threading
 from time import time as t
 from moviepy.editor import *
-from skimage.measure import compare_ssim
-import cv2
 import os
 import zipfile
 import shutil
+from fast_ssim import get_diff
 
 
 class Video:
     def __init__(self, video_path):
-        self.video_clip = VideoFileClip(video_path)
+        try:
+            self.video_clip = VideoFileClip(video_path)
+        except Exception as ex:
+            print(ex)
+            exit()
         self.audio_clip = self.video_clip.audio
         self.fps = self.video_clip.fps
         self._len = self.video_clip.duration
@@ -34,7 +37,7 @@ class Video:
         current_time_point = self._start + self.frame_time
         while current_time_point < self._stop:
             current_frame = self.video_clip.get_frame(current_time_point)
-            similarity = self.get_ssim(previous_frame, current_frame)
+            similarity = get_diff(previous_frame, current_frame)
             if similarity < 0.45:
                 self.time_points.append(round(current_time_point, accuracy))
                 self.frame_points.append(round(current_time_point * self.fps))
@@ -54,14 +57,14 @@ class Video:
             except Exception as exp:
                 print(exp)
 
-    @staticmethod
-    def get_ssim(im1, im2):
-        im1 = cv2.resize(im1, (200, 200))
-        im2 = cv2.resize(im2, (200, 200))
-        im1 = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
-        im2 = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
-        (score, diff) = compare_ssim(im1, im2, full=True)
-        return score
+    # @staticmethod
+    # def get_ssim(im1, im2):
+    #     im1 = cv2.resize(im1, (200, 200))
+    #     im2 = cv2.resize(im2, (200, 200))
+    #     im1 = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
+    #     im2 = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
+    #     (score, diff) = compare_ssim(im1, im2, full=True)
+    #     return score
 
 
 class SplitThread(threading.Thread):
@@ -131,11 +134,11 @@ def main(video_path):
     time_points, frame_points = sum_points(videos)
     print('time points:', time_points)
     print('frame points:', frame_points)
-    write_videos(path_to_save=temp_videos_path, videos=videos)
-    zip_videos(videos_output_path=temp_videos_path, zip_output_path='', zip_name='videos.zip')
+    # write_videos(path_to_save=temp_videos_path, videos=videos)
+    # zip_videos(videos_output_path=temp_videos_path, zip_output_path='', zip_name='videos.zip')
     shutil.rmtree(temp_videos_path)
     print('Done')
     print('TOTAL TIME:', t() - s)
 
 
-main(video_path='11.mp4')
+main(video_path=r'11.mp4')
