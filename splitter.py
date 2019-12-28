@@ -154,4 +154,3 @@ def main(video_path):
 
 
 # main(video_path=r'11.mp4')
-# print('ok')
