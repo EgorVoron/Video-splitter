@@ -1,8 +1,6 @@
 import threading
 from time import time as t
 from moviepy.editor import *
-from skimage.measure import compare_ssim
-import cv2
 import os
 import zipfile
 import shutil
@@ -26,8 +24,6 @@ class Video:
         self._len = self._len / parts_num
         self._frame_number = self._frame_number / parts_num
         self._start = self._len * part
-        # if part == 0:  # костыль
-        #     self._start = self.frame_time
         self._stop = self._len * (part + 1)
 
     def find_points(self, accuracy=5):
@@ -44,39 +40,17 @@ class Video:
             previous_frame = current_frame
             current_time_point += self.frame_time
 
-    def set_frame_points(self, frame_points):
-        self.frame_points = frame_points
-
-    def set_time_points(self, time_points):
-        self.time_points = time_points
-
-    def set_frames(self, frames):
-        self.frames = frames
-
-    def get_frames(self):
-        return self.frames
-
-    def get_frame_points(self):
-        return self.frame_points
-
-    def get_time_points(self):
-        return self.time_points
-
-    def make_videos(self, path_to_save):
-        print('Writing...')
+    def make_videos(self, path_to_save, thread_number):
         for point_number in range(len(self.time_points) - 1):
             try:
                 sub = self.video_clip.subclip(self.time_points[point_number],
                                               self.time_points[point_number + 1] - self.frame_time)
                 audio = self.audio_clip.subclip(self.time_points[point_number],
                                                 self.time_points[point_number + 1] - self.frame_time)
-                audio.write_audiofile('temp_audio.mp3')
-                audio = AudioFileClip('temp_audio.mp3')
                 sub.set_audio(audio)
-                sub.write_videofile(f'{path_to_save}/n_{point_number}.mp4')
+                sub.write_videofile(f'{path_to_save}/{thread_number}_{point_number}.mp4')
             except Exception as exp:
                 print(exp)
-        print('Done')
 
 
 class SplitThread(threading.Thread):
@@ -91,43 +65,36 @@ class SplitThread(threading.Thread):
         video = Video(video_path=self.file_path)
         video.make_video_part(self.number, self.num_threads)
         video.find_points()
-        self._return = (video.get_time_points(), video.get_frame_points(), video.get_frames())
+        self._return = video
 
     def join(self, *args):
         threading.Thread.join(self)
         return self._return
 
 
-def get_diff(im1, im2, mode='gray'):
-    im1 = cv2.resize(im1, (200, 200))
-    im2 = cv2.resize(im2, (200, 200))
-    if mode == 'color':
-        im1 = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
-        im2 = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
-    (score, diff) = compare_ssim(im1, im2, full=True)
-    return score
+
 
 
 def run_splitter(num_threads, file_path):
     threads = []
     for part in range(num_threads):
         split_thread = SplitThread(part, num_threads, file_path)
-        threads.append(split_thread)
         split_thread.start()
-    time_points, frame_points, frames = [], [], []
-    for thread in threads:
-        time_points += thread.join()[0]
-        frame_points += thread.join()[1]
-        frames += thread.join()[2]
-    return time_points, frame_points, frames
+        threads.append(split_thread)
+    return [thread.join() for thread in threads]
 
 
-def write_videos(time_points, frame_points, frames, file_path, path_to_save):
-    full_video = Video(video_path=file_path)
-    full_video.set_frame_points(frame_points)
-    full_video.set_time_points(time_points)
-    full_video.set_frames(frames)
-    full_video.make_videos(path_to_save)
+def write_videos(path_to_save, videos):
+    print('Writing...')
+    # begin of don't touch
+    for video_num, video in enumerate(videos[:-1]):
+        video.time_points.append(videos[video_num + 1].time_points[0])
+    videos[-1].time_points.append(videos[-1].video_clip.duration)
+    # end of don't touch
+    for n, video in enumerate(videos):
+        video.make_videos(path_to_save, n)
+    print('Writing finished')
+    return
 
 
 def zip_videos(videos_output_path, zip_output_path, zip_name):
@@ -143,12 +110,11 @@ def main(video_path):
     temp_videos_path = r'temp_videos_path/'
     if not os.path.exists(temp_videos_path):
         os.makedirs(temp_videos_path)
-    time_points, frame_points, frames = run_splitter(num_threads=3, file_path=video_path)
-    print('SPLITTING TIME:', t() - s)
-    print(time_points)
-    write_videos(time_points, frame_points, frames, file_path=video_path, path_to_save=temp_videos_path)
+    videos = run_splitter(num_threads=3, file_path=video_path)
+    write_videos(path_to_save=temp_videos_path, videos=videos)
     zip_videos(videos_output_path=temp_videos_path, zip_output_path='', zip_name='videos.zip')
     shutil.rmtree(temp_videos_path)
+    print('Done')
     print('TOTAL TIME:', t() - s)
 
 
