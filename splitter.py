@@ -152,5 +152,5 @@ def main(video_path):
     print('TOTAL TIME:', t() - s)
 
 
-main(video_path=r'11.mp4')
-print('ok')
+# main(video_path=r'11.mp4')
+# print('ok')
