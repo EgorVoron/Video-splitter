@@ -1,6 +1,5 @@
-from ssim.ssim_main import SSIM, Timer, saveData
+from ssim.ssim_main import SSIM, saveData
 import cv2
-from imageio import imread
 
 
 def get_diff(im1, im2, mode='color'):
@@ -16,10 +15,9 @@ def get_diff(im1, im2, mode='color'):
     score = SSIM(im1, im2, max_value=1)
     return score
 
-if __name__ == "__main__":
+
+def test():
+    from imageio import imread
     a = imread('ssim/jpg/0.jpg')
     b = imread('ssim/jpg/1.jpg')
     print(get_diff(a, b))
-
-
-
