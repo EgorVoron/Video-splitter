@@ -69,15 +69,6 @@ class Video:
             except Exception as exp:
                 print(exp)
 
-    # @staticmethod
-    # def get_ssim(im1, im2):
-    #     im1 = cv2.resize(im1, (200, 200))
-    #     im2 = cv2.resize(im2, (200, 200))
-    #     im1 = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
-    #     im2 = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
-    #     (score, diff) = compare_ssim(im1, im2, full=True)
-    #     return score
-
 
 class SplitThread(threading.Thread):
     def __init__(self, number, num_threads, file_path):
@@ -137,7 +128,7 @@ def zip_videos(videos_output_path, zip_output_path, zip_name):
     zipf.close()
 
 
-def main(video_path):
+def run_all(video_path):
     s = t()
     temp_videos_path = r'temp_videos_path/'
     if not os.path.exists(temp_videos_path):

@@ -37,3 +37,7 @@ def get_frame_points():
     write_videos(time_points, frame_points, frames, file_path=filename, path_to_save=r'utils/')
     video_zip = zip_videos(r'utils/')
     return send_file(video_zip, attachment_filename='capsule.zip', as_attachment=True)
+
+
+if __name__ == "__main__":
+    app.run(port=8080)
